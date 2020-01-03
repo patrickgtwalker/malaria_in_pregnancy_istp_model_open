@@ -1,0 +1,3 @@
+sim_params	Sim_params.txt
+preg_params	preg_params.txt
+fertility_rates fertility_rates\Malawi_rates_rural_2012.txt
