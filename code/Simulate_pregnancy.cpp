@@ -72,6 +72,7 @@ ANY ANC-BASED INTERVENTION */
 void pregnancy::run_to_delivery(void) {
 	//set ANC counters to zero
 	bool first_tri_past = false;
+	hist_inf_beg = histinf;
 	vector<bool> past_ANC(ANC_times.size() , false);
 	if (start_peri_inftimes_B.size() == 0)gest_time = gestation_duration + 1.0; //PREGNANCY NOT EXPOSED 
 	else {
@@ -91,6 +92,7 @@ void pregnancy::run_to_delivery(void) {
 		end_peri_time_K.erase(end_peri_time_K.begin());
 		// find next event (either peripheral infection clears or placenta is exposed)
 		gest_time = min(pcr_clear_time, plac_exposure_times_P[0]);
+		if ((ANC_times.size() > 0) && (!past_ANC[0]) && (gest_time > ANC_times[0]) && (start_pcr_time < ANC_times[0]) && (pcr_clear_time > ANC_times[0])) inf_anc1 = true;
 		///// CHECK IF WE'VE ACTUALLY PASSED ANY ANC DATES AND IF SO WHETHER WE PROVIDED PROPHYLAXIS
 		if(first_tri_visit) any_first_trimester(first_tri_past);
 		for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
@@ -116,7 +118,7 @@ void pregnancy::run_to_delivery(void) {
 				if (gest_time == plac_exposure_times_P[0]) {
 					/// If here it's a peripheral infection potentially sequestering in placenta
 					///INDICATOR FOR EVER EXPOSED TO PLACENTAL PARASITES
-						/// see if any new infection occurs after first ANC (so a failure of prophylaxis)
+						/// see if any new infection occurs after first ANC (so as failure of protect)
 					if (gest_time > ANC_times[0]) {
 						proph_fail = 1;
 						proph_fail_tot++;
@@ -159,7 +161,8 @@ void pregnancy::run_to_delivery(void) {
 			gest_time = ((nextplactime > gest_time && nextplactime < next_peri_time) ? nextplactime : next_peri_time);
 			///// CHECK IF WE'VE ACTUALLY PASSED ANY ANC DATES AND IF SO WHETHER WE PROVIDED PROPHYLAXIS
 			if (first_tri_visit) any_first_trimester(first_tri_past);
-				for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
+			if ((ANC_times.size() > 0) && (!past_ANC[0]) && (gest_time > ANC_times[0]) && (start_pcr_time < ANC_times[0]) && (pcr_clear_time > ANC_times[0])) inf_anc1 = true;
+			for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
 					IPTISTupdate(ANC, past_ANC);
 				}	
 		}
@@ -277,11 +280,11 @@ return;
 ////////////////////////////////////////////////////////// FUNCTIONS FOR ANC INTERVENTIONS //////////////////////
 /// FUNCTION TO SEE IF TESTING AND/OR TREATMENT IN FIRST TRIMESTER 
 void  pregnancy::any_first_trimester(bool &past) {
-	if ((!past)&((first_tri_rdt > 0) & (gest_time>first_tri_visit_time)& (first_tri_visit_time >0))) {
+	if ((!past)&&((first_tri_rdt > 0) && (gest_time>first_tri_visit_time)&& (first_tri_visit_time >0))) {
 		past = true;
-		bool current_inf = (start_pcr_time< first_tri_visit_time) & (pcr_clear_time> first_tri_visit_time);
+		bool current_inf = (start_pcr_time< first_tri_visit_time) && (pcr_clear_time> first_tri_visit_time);
 		double first_tri_sens = first_tri_rdt == 1 ? npreg_rdt_sens : perfect_sens;
-		if (current_inf&(runif() < first_tri_sens)) {
+		if (current_inf&&(runif() < first_tri_sens)) {
 			if(ISTeff>runif())drugclearance(first_tri_visit_time, getend_weibull(first_tri_visit_time, ISTscale, ISTshape));
 		}
 	}
@@ -290,8 +293,8 @@ void  pregnancy::any_first_trimester(bool &past) {
 
 /// FUNCTION TO IMPLEMENT INTERVENTION IN ANC VISITS FROM SECOND TRIMESTER ONWARDS
 void pregnancy::IPTISTupdate(int ANC,vector<bool>& past) {
-	if ((!past[ANC]) & (gest_time > ANC_times[ANC])) {
-		if ((strategy == 0) & (ANC == 1) & ((totalpara > 0) | ((start_pcr_time < ANC_times[ANC]) & (pcr_clear_time > ANC_times[ANC])))) clear_fail = 1;
+	if ((!past[ANC]) && (gest_time > ANC_times[ANC])) {
+		if ((strategy == 0) && (ANC == 1) && ((totalpara > 0) || ((start_pcr_time < ANC_times[ANC]) && (pcr_clear_time > ANC_times[ANC])))) clear_fail = 1;
 		if (strategy == 1) {
 			// IPTp using "IPT_drug"
 			if (IPTeff > runif()) {
@@ -408,7 +411,7 @@ void pregnancy::clearall(void){
 	
 	proph_fail=0;
 	proph_fail_tot=0;
-	
+	inf_anc1 = false;
 	ever_peri=0;
 	ever_plac=0;
 	timechron=0;

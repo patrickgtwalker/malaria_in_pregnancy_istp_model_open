@@ -1,4 +1,18 @@
 // FUNCTION FOR STORING FERTILITY RATES
+vector<double > store_EIRs(const string& name) {
+	ifstream myfile;
+	vector<double> values;
+	myfile.open(name.c_str());
+	while (myfile) {
+		double val;
+		myfile >>  val;
+		cout << val << "\n";
+		values.push_back(val);
+		if (myfile.eof()) break;
+	}
+	cout << "size" << values.size();
+return values;
+}
 
 vector<vector<double>> store_rates(const string &name){
 	string line;

@@ -32,6 +32,8 @@ struct pregnancy {
 	double fracD;
 	double rate;
 	
+	bool inf_anc1;
+	int hist_inf_beg;
 	///-----------------NATURAL HISTORY OF PREGNANCY-----------------------////
 
 	double fracA[200];

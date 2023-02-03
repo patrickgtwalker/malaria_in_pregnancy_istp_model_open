@@ -17,7 +17,7 @@
 #include "simulation.cpp"
 
 using namespace std;
-#define HOME
+//#define HOME
 
 #ifdef HOME
 int main(int argc, char *argv[]) {
@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
 	const string sim_params = root + file_map["sim_params"];
 	const string preg_params = root + file_map["preg_params"];
 	const string fertility_rates = root + file_map["fertility_rates"];
+	const string EIR_file = root + file_map["EIR_file"];
 #ifndef HOME
 	// log name of executable
 	cout << "executable\t" << argv[0] << '\n';
@@ -135,15 +136,27 @@ int main(int argc, char *argv[]) {
 #endif
 	////IMPORT FERILITY RATES ///
 	cout << "\nfertility_rates\t" << fertility_rates << '\n';
+	cout << "\EIR_file\t" << EIR_file << '\n';
 	vector<vector<double>> f_rates = store_rates(fertility_rates);
 	simulation simulation;
 	simulation.ratesarray=store_rates(fertility_rates);
 	simulation.summary = from_map_bool("summary", 0);
+	simulation.inf_history = from_map_bool("inf_history", 0);
+	simulation.EIR_vector = from_map_bool("EIR_vector", 0);
 	simulation.file.open(name);
+	if (simulation.EIR_vector) {
+		simulation.EIRs_to_run = store_EIRs(EIR_file);
+	}
+	//for (int i = 0;i < simulation.EIRs_to_run.size();i++) cout << simulation.EIRs_to_run[i] << "\n";
 	if (simulation.summary) {
 		string summary_name = name;
 		summary_name.replace(summary_name.find(".txt"), 4, "_summary.txt");
 		simulation.file_summary.open(summary_name);
+	}
+	if (simulation.inf_history) {
+		string inf_history_name = name;
+		inf_history_name.replace(inf_history_name.find(".txt"), 4, "_inf_history.txt");
+		simulation.file_inf_history.open(inf_history_name);
 	}
 	simulation.num_sims = from_map("num_women", 1, 10000000000000000000, -99999);
 	////IMPORT AND SET UP OUTPUT CATEGORIES///
@@ -161,7 +174,7 @@ int main(int argc, char *argv[]) {
 	simulation.gen_parms.setup();
 	simulation.gen_parms.ft = from_map("ft", 0, 1, 1);
 	simulation.gen_parms.EIR = from_map("EIR", 0, 10000, 1);
-	simulation.gen_parms.init_determ_model();
+	
 	////RUN SIMULATED PREGNANCY COHORT///
 	simulation.run_simulation();
 	cout << (double)(clock() - begin) / CLOCKS_PER_SEC << " seconds \n";
