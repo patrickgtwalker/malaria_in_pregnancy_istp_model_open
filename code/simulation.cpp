@@ -60,9 +60,20 @@ void simulation::ANC_setup(void) {
 	preg.rate = from_map("LBW_hazard", 0, 100000);
 	int ANC_visits = 1;
 	while (in_map("ANC_" + as_string(ANC_visits)) && from_map("ANC_" + as_string(ANC_visits)) == 1) {
-		preg.ANC_times.push_back(from_map("ANC_time_" + as_string(ANC_visits), 0, 280));
+		double ANC_time = from_map("ANC_time_" + as_string(ANC_visits), 0, 280);
+		preg.ANC_times.push_back(ANC_time);
 		ANC_visits++;
+		int ANC_time_int = floor(ANC_time)-92;
+		cout << ANC_time_int << "\n";
+		cout.flush();
+		preg.HB_inf_preg.push_back(HB_inf_vectors[ANC_time_int]);
+		preg.HB_uninf_grav.push_back(HB_non_inf_vectors[ANC_time_int]);
 	}
+	cout << preg.HB_inf_preg[0][0] << " " << preg.HB_uninf_grav[0][0] << "\n";
+	cout << preg.HB_inf_preg[1][0] << " " << preg.HB_inf_preg[1][1] << "\n";
+	cout << preg.HB_uninf_grav[0][0] << " " << preg.HB_uninf_grav[0][1] << "\n";
+	cout.flush();
+
 	preg.ru = 1.00 / 107.867;
 	preg.rd = 1.00 / 5.00;
 	preg.rp = 1 / 9.00;
