@@ -4,9 +4,12 @@
 struct simulation{
 	int num_sims;
 	bool summary;
+	bool HB_model;
 	gen_parms gen_parms;
 	pregnancy preg;
 	vector<vector<double>> ratesarray;
+	vector<vector<double>> HB_inf_vectors;
+	vector<vector<double>> HB_non_inf_vectors;
 	vector<double> par_down;
 	vector<double> par_up;
 	vector<double> num_simulated;

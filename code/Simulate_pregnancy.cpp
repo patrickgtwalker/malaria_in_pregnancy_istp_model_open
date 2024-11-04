@@ -92,13 +92,14 @@ void pregnancy::run_to_delivery(void) {
 		// find next event (either peripheral infection clears or placenta is exposed)
 		gest_time = min(pcr_clear_time, plac_exposure_times_P[0]);
 		///// CHECK IF WE'VE ACTUALLY PASSED ANY ANC DATES AND IF SO WHETHER WE PROVIDED PROPHYLAXIS
-		if(first_tri_visit) any_first_trimester(first_tri_past);
-		for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
-			IPTISTupdate(ANC, past_ANC);
-		}
+		check_any_ANC(first_tri_past, past_ANC);
+		//if(first_tri_visit) any_first_trimester(first_tri_past);
+		//for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
+			//IPTISTupdate(ANC, past_ANC);
+		//}
 		//NOW LOOP UNTIL DELIVERY
 		while (gest_time < gestation_duration) {
-		
+
 			/// OTHERWISE WE HAVE REACHED DELIVERY
 			/*while gest_time is <gestation_duration there are two types of events peripheral or placental
 			peripheral:
@@ -158,10 +159,7 @@ void pregnancy::run_to_delivery(void) {
 			/// FIND OUT WHETHER NEXT EVENT IS PERIPHERAL OF PLACENTAL
 			gest_time = ((nextplactime > gest_time && nextplactime < next_peri_time) ? nextplactime : next_peri_time);
 			///// CHECK IF WE'VE ACTUALLY PASSED ANY ANC DATES AND IF SO WHETHER WE PROVIDED PROPHYLAXIS
-			if (first_tri_visit) any_first_trimester(first_tri_past);
-				for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
-					IPTISTupdate(ANC, past_ANC);
-				}	
+			check_any_ANC(first_tri_past, past_ANC);
 		}
 		/// STORE EXPOSURE AT THE END OF PREGNANCY
 		histplac += total_plac;
@@ -179,6 +177,20 @@ void pregnancy::run_to_delivery(void) {
 		}
 	}
 	return;
+}
+
+void pregnancy::check_any_ANC(bool &first_tri_past,vector<bool> &past_ANC) {
+	if (HB_model) {
+		for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
+			HB_calc(ANC, past_ANC);
+		}
+	}
+	else {
+		if (first_tri_visit) any_first_trimester(first_tri_past);
+		for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
+			IPTISTupdate(ANC, past_ANC);
+		}
+	}
 }
 
 //////////////////////////////////////// PLACENTAL INFECTION IN ABSENCE OF INTERVENTION ///////////////////////////////
@@ -288,6 +300,22 @@ void  pregnancy::any_first_trimester(bool &past) {
 	return;
 }
 
+void pregnancy::HB_calc(int ANC, vector<bool>& past) {
+	if ((!past[ANC]) & (gest_time > ANC_times[ANC])) {
+		if ((totalpara > 0) | ((start_pcr_time < ANC_times[ANC]) & (pcr_clear_time > ANC_times[ANC]))) {
+			HB_diff[ANC] = HB_inf_preg[ANC][histinf];
+			HB_diff_iptp[ANC] = HB_diff[ANC] * (1 - iptp_hb_eff);
+			double HB_uninf = HB_uninf_grav[ANC][parity];
+			double HB_mean_inf = HB_uninf + HB_diff[ANC];
+			double HB_mean_inf_iptp = HB_uninf + HB_diff_iptp[ANC];
+			anaemia_moderate[ANC] = normalCDF((HB_uninf - 9.00) / HB_sigma) - normalCDF((HB_mean_inf - 9.00) / HB_sigma);
+			anaemia_severe[ANC] = normalCDF((HB_uninf - 7.00) / HB_sigma) - normalCDF((HB_mean_inf - 7.00) / HB_sigma);
+			anaemia_moderate_iptp[ANC] = normalCDF((HB_uninf - 9.00) / HB_sigma) - normalCDF((HB_mean_inf_iptp - 9.00) / HB_sigma);
+			anaemia_severe_iptp[ANC] = normalCDF((HB_uninf - 7.00) / HB_sigma) - normalCDF((HB_mean_inf_iptp - 7.00) / HB_sigma);
+		}
+	}
+	return;
+}
 /// FUNCTION TO IMPLEMENT INTERVENTION IN ANC VISITS FROM SECOND TRIMESTER ONWARDS
 void pregnancy::IPTISTupdate(int ANC,vector<bool>& past) {
 	if ((!past[ANC]) & (gest_time > ANC_times[ANC])) {

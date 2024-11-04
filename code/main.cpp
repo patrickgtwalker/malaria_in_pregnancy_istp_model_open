@@ -17,7 +17,7 @@
 #include "simulation.cpp"
 
 using namespace std;
-#define HOME
+//#define HOME
 
 #ifdef HOME
 int main(int argc, char *argv[]) {
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 	out_cout.open(cout_name.c_str(), ios::out);
 	cout.rdbuf(out_cout.rdbuf());
 	
-	/* get the names of the files with for
+	/* get the names of the files for
 	1) simulation options
 	2) pregnancy_model_parameters
 	3) fertility rates
@@ -75,6 +75,9 @@ int main(int argc, char *argv[]) {
 	const string sim_params = root + file_map["sim_params"];
 	const string preg_params = root + file_map["preg_params"];
 	const string fertility_rates = root + file_map["fertility_rates"];
+	const string Hb_non_inf = root + file_map["HB_non_inf_file"];
+	const string Hb_inf = root + file_map["HB_inf_file"];
+	cout << Hb_inf << Hb_non_inf<<"\n";
 #ifndef HOME
 	// log name of executable
 	cout << "executable\t" << argv[0] << '\n';
@@ -134,11 +137,13 @@ int main(int argc, char *argv[]) {
 	}
 #endif
 	////IMPORT FERILITY RATES ///
-	cout << "\nfertility_rates\t" << fertility_rates << '\n';
-	vector<vector<double>> f_rates = store_rates(fertility_rates);
 	simulation simulation;
-	simulation.ratesarray=store_rates(fertility_rates);
+	simulation.ratesarray= store_rates(fertility_rates);
+	simulation.HB_inf_vectors = store_rates(Hb_inf);
+	simulation.HB_non_inf_vectors= store_rates(Hb_non_inf);
 	simulation.summary = from_map_bool("summary", 0);
+	simulation.HB_model = from_map_bool("HB_model", 0);
+	
 	simulation.file.open(name);
 	if (simulation.summary) {
 		string summary_name = name;

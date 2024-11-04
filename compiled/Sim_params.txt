@@ -32,3 +32,5 @@ output_end_2 -1
 output_beg_3 -1
 output_end_3 -1
 summary	1
+HB_model 0
+

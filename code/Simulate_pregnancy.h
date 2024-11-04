@@ -33,7 +33,6 @@ struct pregnancy {
 	double rate;
 	
 	///-----------------NATURAL HISTORY OF PREGNANCY-----------------------////
-
 	double fracA[200];
 	double progC[200];
 
@@ -42,10 +41,6 @@ struct pregnancy {
 
 	double totalpara;
 	double totchron;
-
-
-
-
 	double ever_peri;
 	double ever_plac;
 	double total_plac;
@@ -86,6 +81,20 @@ struct pregnancy {
 	double failprob;
 	bool prev_inf;
 
+// HB parameters ////
+	double HB_sigma;
+	double iptp_hb_eff;
+	vector<vector<double>> HB_uninf_grav;
+	vector<vector<double>> HB_inf_preg;
+
+///HB counters
+	vector<double> HB_diff;
+	vector<double> HB_diff_iptp;
+	vector<double> anaemia_moderate;
+	vector<double> anaemia_severe;
+	vector<double> anaemia_moderate_iptp;
+	vector<double> anaemia_severe_iptp;
+	
 ///// NATURAL PROGRESSION FUNCTIONS  /////
 void generateperiinfs(void);
 void run_to_delivery(void);
@@ -107,6 +116,8 @@ void clearall(void);
 4: Hybrid ISTp (test at all visits, ISTp drug if test-positive, IPTp drug otherwise)
 */
 int strategy;
+int HB_model;
+int inf_history_model;
 /// Gestation time of each ANC visit
 vector<double> ANC_times;
 // whether intervention disrupts immunity (or treating intervention as newly implemented across gravidities
@@ -129,10 +140,10 @@ double ISTeff;
 double ISTscale;
 double ISTshape;
 
-
+void check_any_ANC(bool& first_tri_past, vector<bool>& past_ANC);
 void any_first_trimester(bool &past);
 void IPTISTupdate(int ANC,vector<bool> & past);
-
+void HB_calc(int ANC, vector<bool>& past);
 double primi_sens;
 double rdt_preg_offset;
 double rdt_preg_shape;

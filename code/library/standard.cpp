@@ -1,6 +1,7 @@
 #include "standard.h"
 #ifndef STANDARD_C
 #define STANDARD_C
+double M_SQRT1_2 = 0.707106781;
 
 string extract_time_info(const char* format){
 	char c[40];
@@ -128,6 +129,10 @@ double gen_weibull(double scale,double shape){
 
 ///--- End of Random number generators ---/////
 
+double normalCDF(double value)
+{
+	return 0.5 * erfc(-value * M_SQRT1_2);
+}	
 
 
 #endif
