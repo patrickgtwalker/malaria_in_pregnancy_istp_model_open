@@ -1,0 +1,23 @@
+# Visual Studio project files
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# Visual Studio settings folder
+.vs/
+
+# Build directories
+/Debug/
+/Release/
+/anaemia_model/
+# Other common temporary files
+*.obj
+*.pch
+*.idb
+*.pdb
+*.ipdb
+*.tlog
+*.log
+*.cache
+*.ilk
