@@ -5,6 +5,7 @@ struct simulation{
 	int num_sims;
 	bool summary;
 	bool HB_model;
+	bool inf_history;
 	gen_parms gen_parms;
 	pregnancy preg;
 	vector<vector<double>> ratesarray;
@@ -24,20 +25,29 @@ struct simulation{
 	vector<double> prop_fail_proph;
 	vector<double> tot_fail_proph;
 	vector<double> LBW_risk;
+	vector<double> HB_diff;
+	vector<double> anaemia_moderate;
+	vector<double> anaemia_severe;
+	vector<double> HB_diff_iptp;
+	vector<double> anaemia_moderate_iptp;
+	vector<double> anaemia_severe_iptp;
+	ofstream file_inf_history;
 	ofstream file_summary;
-
+	ofstream hb_summary;
 
 	void run_simulation(void);
 	void setup_summary(void);
 	void setup_timeline(void);
+	void setup_hb_summary(void);
 	void ANC_setup(void);
 	
 	void life_time(void);
 	void run_pregnancy(pregnancy& run_preg);
 	void getfirststate(void);
-
+	void store_hb_summary(pregnancy& store_preg);
 	void store_output(pregnancy& store_preg);
 	void store_summary(pregnancy& store_preg);
 	void write(void);
 	void write_summary(void);
+	void write_hb_summary(void);
 };

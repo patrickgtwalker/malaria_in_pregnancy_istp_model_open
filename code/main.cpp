@@ -17,12 +17,12 @@
 #include "simulation.cpp"
 
 using namespace std;
-//#define HOME
+#define HOME
 
 #ifdef HOME
 int main(int argc, char *argv[]) {
 	const clock_t begin = clock();
-	const string root = "C:/Users/pgw06/source/repos/MiP_model/Release/";
+	const string root = "C:/Users/pgw06/source/repos/malaria_in_pregnancy_istp_model_open/anaemia_model/anaemia_model/x64/Release/";
 //const string root = "C:/Users/pgw06/Documents/Model_with_linked_RDT/required/";
 	const string directory = root + "def_direct.txt";
 	const string name = root + "output/check_recalc2.txt";
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 	const string name = root + as_string(argv[arg++]);
 #endif
 	// open a cout file to summarise simulation and parameters
-	
+	cout << name<<"\n";
 	string cout_name = name;
 	cout_name.replace(cout_name.find(".txt"), 4, ".cout");
 	ofstream out_cout;
@@ -57,6 +57,7 @@ int main(int argc, char *argv[]) {
 	2) pregnancy_model_parameters
 	3) fertility rates
 	*/
+	cout << "here\n";
 	map<string, string> file_map;
 	ifstream input(directory.c_str());
 	if (!input)
@@ -77,7 +78,7 @@ int main(int argc, char *argv[]) {
 	const string fertility_rates = root + file_map["fertility_rates"];
 	const string Hb_non_inf = root + file_map["HB_non_inf_file"];
 	const string Hb_inf = root + file_map["HB_inf_file"];
-	cout << Hb_inf << Hb_non_inf<<"\n";
+	
 #ifndef HOME
 	// log name of executable
 	cout << "executable\t" << argv[0] << '\n';
@@ -143,12 +144,22 @@ int main(int argc, char *argv[]) {
 	simulation.HB_non_inf_vectors= store_rates(Hb_non_inf);
 	simulation.summary = from_map_bool("summary", 0);
 	simulation.HB_model = from_map_bool("HB_model", 0);
-	
+	simulation.inf_history = from_map_bool("inf_history", 0);
 	simulation.file.open(name);
+	if (simulation.HB_model) {
+		string hb_summary_name = name;
+		hb_summary_name.replace(hb_summary_name.find(".txt"), 4, "_hb_summary.txt");
+		simulation.hb_summary.open(hb_summary_name);
+	}
 	if (simulation.summary) {
 		string summary_name = name;
 		summary_name.replace(summary_name.find(".txt"), 4, "_summary.txt");
 		simulation.file_summary.open(summary_name);
+	}
+	if (simulation.inf_history) {
+		string inf_history_name = name;
+		inf_history_name.replace(inf_history_name.find(".txt"), 4, "_inf_history.txt");
+		simulation.file_inf_history.open(inf_history_name);
 	}
 	simulation.num_sims = from_map("num_women", 1, 10000000000000000000, -99999);
 	////IMPORT AND SET UP OUTPUT CATEGORIES///

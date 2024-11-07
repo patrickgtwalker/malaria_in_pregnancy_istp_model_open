@@ -71,6 +71,7 @@ void pregnancy::generateperiinfs(void){
 ANY ANC-BASED INTERVENTION */
 void pregnancy::run_to_delivery(void) {
 	//set ANC counters to zero
+	bool hb_eval_past = false;
 	bool first_tri_past = false;
 	vector<bool> past_ANC(ANC_times.size() , false);
 	if (start_peri_inftimes_B.size() == 0)gest_time = gestation_duration + 1.0; //PREGNANCY NOT EXPOSED 
@@ -92,7 +93,15 @@ void pregnancy::run_to_delivery(void) {
 		// find next event (either peripheral infection clears or placenta is exposed)
 		gest_time = min(pcr_clear_time, plac_exposure_times_P[0]);
 		///// CHECK IF WE'VE ACTUALLY PASSED ANY ANC DATES AND IF SO WHETHER WE PROVIDED PROPHYLAXIS
-		check_any_ANC(first_tri_past, past_ANC);
+		
+		if (HB_model == 1) {
+			cout << "here" << "\n";
+			HB_calc(hb_eval_past);
+		}
+		else {
+			check_any_ANC(first_tri_past, past_ANC);
+		}
+		
 		//if(first_tri_visit) any_first_trimester(first_tri_past);
 		//for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
 			//IPTISTupdate(ANC, past_ANC);
@@ -159,7 +168,12 @@ void pregnancy::run_to_delivery(void) {
 			/// FIND OUT WHETHER NEXT EVENT IS PERIPHERAL OF PLACENTAL
 			gest_time = ((nextplactime > gest_time && nextplactime < next_peri_time) ? nextplactime : next_peri_time);
 			///// CHECK IF WE'VE ACTUALLY PASSED ANY ANC DATES AND IF SO WHETHER WE PROVIDED PROPHYLAXIS
-			check_any_ANC(first_tri_past, past_ANC);
+			if (HB_model == 1) {
+				HB_calc(hb_eval_past);
+			}
+			else {
+				check_any_ANC(first_tri_past, past_ANC);
+			}
 		}
 		/// STORE EXPOSURE AT THE END OF PREGNANCY
 		histplac += total_plac;
@@ -179,18 +193,13 @@ void pregnancy::run_to_delivery(void) {
 	return;
 }
 
-void pregnancy::check_any_ANC(bool &first_tri_past,vector<bool> &past_ANC) {
-	if (HB_model) {
-		for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
-			HB_calc(ANC, past_ANC);
-		}
+void pregnancy::check_any_ANC(bool& first_tri_past, vector<bool>& past_ANC) {
+	if (first_tri_visit) any_first_trimester(first_tri_past);
+	for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
+		IPTISTupdate(ANC, past_ANC);
+
 	}
-	else {
-		if (first_tri_visit) any_first_trimester(first_tri_past);
-		for (int ANC = 0; ANC < ANC_times.size(); ANC++) {
-			IPTISTupdate(ANC, past_ANC);
-		}
-	}
+	return;
 }
 
 //////////////////////////////////////// PLACENTAL INFECTION IN ABSENCE OF INTERVENTION ///////////////////////////////
@@ -300,18 +309,18 @@ void  pregnancy::any_first_trimester(bool &past) {
 	return;
 }
 
-void pregnancy::HB_calc(int ANC, vector<bool>& past) {
-	if ((!past[ANC]) & (gest_time > ANC_times[ANC])) {
-		if ((totalpara > 0) | ((start_pcr_time < ANC_times[ANC]) & (pcr_clear_time > ANC_times[ANC]))) {
-			HB_diff[ANC] = HB_inf_preg[ANC][histinf];
-			HB_diff_iptp[ANC] = HB_diff[ANC] * (1 - iptp_hb_eff);
-			double HB_uninf = HB_uninf_grav[ANC][parity];
-			double HB_mean_inf = HB_uninf + HB_diff[ANC];
-			double HB_mean_inf_iptp = HB_uninf + HB_diff_iptp[ANC];
-			anaemia_moderate[ANC] = normalCDF((HB_uninf - 9.00) / HB_sigma) - normalCDF((HB_mean_inf - 9.00) / HB_sigma);
-			anaemia_severe[ANC] = normalCDF((HB_uninf - 7.00) / HB_sigma) - normalCDF((HB_mean_inf - 7.00) / HB_sigma);
-			anaemia_moderate_iptp[ANC] = normalCDF((HB_uninf - 9.00) / HB_sigma) - normalCDF((HB_mean_inf_iptp - 9.00) / HB_sigma);
-			anaemia_severe_iptp[ANC] = normalCDF((HB_uninf - 7.00) / HB_sigma) - normalCDF((HB_mean_inf_iptp - 7.00) / HB_sigma);
+void pregnancy::HB_calc(bool &past) {
+	if ((!past) && (gest_time > HB_eval_time)) {
+		if ((totalpara > 0) || ((start_pcr_time < HB_eval_time) && (pcr_clear_time > HB_eval_time))) {
+			HB_diff = HB_inf_preg[histinf];
+			HB_diff_iptp = HB_diff * (1 - iptp_hb_eff);
+			double HB_uninf = HB_uninf_grav[parity];
+			double HB_mean_inf = HB_uninf + HB_diff;
+			double HB_mean_inf_iptp = HB_uninf + HB_diff_iptp;
+			anaemia_moderate = normalCDF((HB_uninf - moderate_threshold) / HB_sigma) - normalCDF((HB_mean_inf - moderate_threshold) / HB_sigma);
+			anaemia_severe = normalCDF((HB_uninf - severe_threshold) / HB_sigma) - normalCDF((HB_mean_inf - severe_threshold) / HB_sigma);
+			anaemia_moderate_iptp = normalCDF((HB_uninf - moderate_threshold) / HB_sigma) - normalCDF((HB_mean_inf_iptp - moderate_threshold) / HB_sigma);
+			anaemia_severe_iptp = normalCDF((HB_uninf - severe_threshold) / HB_sigma) - normalCDF((HB_mean_inf_iptp - severe_threshold) / HB_sigma);
 		}
 	}
 	return;

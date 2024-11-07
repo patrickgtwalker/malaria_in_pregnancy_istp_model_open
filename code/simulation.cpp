@@ -4,13 +4,16 @@
 void simulation::run_simulation(void) {
 	setup_timeline();
 	ANC_setup();
+	if (HB_model)setup_hb_summary();
 	if (summary)setup_summary();
+	if (inf_history) setup_inf_history();
 	for (int j = 0; j < num_sims; j++) {
 		preg.clearall();
 		life_time();
 	}
 	write();
 	if (summary)write_summary();
+	if (HB_model)write_hb_summary();
 	return;
 }
 
@@ -21,7 +24,15 @@ void simulation::setup_timeline(void){
 	num_simulated.resize(par_down.size());
 	return;
 }
-
+void simulation::setup_hb_summary(void) {
+	prop_peri.resize(par_down.size(), 0);
+	anaemia_moderate.resize(par_down.size(), 0);
+	anaemia_severe.resize(par_down.size(), 0);
+	HB_diff.resize(par_down.size(), 0);
+	anaemia_moderate_iptp.resize(par_down.size(), 0);
+	anaemia_severe_iptp.resize(par_down.size(), 0);
+	HB_diff_iptp.resize(par_down.size(), 0);
+}
 void simulation::setup_summary(void) {
 	prop_peri.resize(par_down.size(),0);
 	prop_plac.resize(par_down.size(), 0);
@@ -40,6 +51,7 @@ void simulation::ANC_setup(void) {
 	preg.ft = gen_parms.ft;
 	preg.strategy = from_map("strategy", 0, 4, 1);
 	preg.intervene = from_map("intervene", 0, 1, 1);
+	preg.HB_model = from_map("HB_model", 0, 1, 1);
 	preg.IPTeff = from_map("drug_efficacy_" + as_string(from_map("IPT_drug", 1, 2)), 0, 1);
 	double IPThl = from_map("drug_half_life_" + as_string(from_map("IPT_drug", 1, 2)), 0, 10000);
 	preg.IPTshape = from_map("drug_shape_" + as_string(from_map("IPT_drug", 1, 2)), 0, 10000);
@@ -63,16 +75,29 @@ void simulation::ANC_setup(void) {
 		double ANC_time = from_map("ANC_time_" + as_string(ANC_visits), 0, 280);
 		preg.ANC_times.push_back(ANC_time);
 		ANC_visits++;
-		int ANC_time_int = floor(ANC_time)-92;
-		cout << ANC_time_int << "\n";
-		cout.flush();
-		preg.HB_inf_preg.push_back(HB_inf_vectors[ANC_time_int]);
-		preg.HB_uninf_grav.push_back(HB_non_inf_vectors[ANC_time_int]);
+		}
+	
+	if (HB_model) {
+		preg.HB_sigma = from_map("HB_sigma", 0.1, 20);
+		preg.HB_eval_time = from_map("HB_eval_time", 85, 200);
+		int HB_eval_time_int = floor(preg.HB_eval_time - 84);
+		preg.moderate_threshold= from_map("moderate_threshold", 4, 12);
+		preg.severe_threshold = from_map("severe_threshold", 4, 12);
+		preg.iptp_hb_eff = from_map("HB_iptp_eff", 0, 1);
+		preg.anaemia_moderate_iptp=0;
+		preg.anaemia_severe_iptp = 0;
+		preg.HB_diff_iptp = 0;
+		preg.anaemia_moderate = 0;
+		preg.anaemia_severe = 0;
+		preg.HB_diff = 0;
+		preg.HB_inf_preg = HB_inf_vectors[HB_eval_time_int];
+		preg.HB_uninf_grav=HB_non_inf_vectors[HB_eval_time_int];
+
 	}
-	cout << preg.HB_inf_preg[0][0] << " " << preg.HB_uninf_grav[0][0] << "\n";
-	cout << preg.HB_inf_preg[1][0] << " " << preg.HB_inf_preg[1][1] << "\n";
-	cout << preg.HB_uninf_grav[0][0] << " " << preg.HB_uninf_grav[0][1] << "\n";
-	cout.flush();
+//	preg.pastANC.resize(preg.ANC_times.size(), 0);
+	//preg.endIPT.resize(preg.ANC_times.size(), 0);
+	//preg.endproph.resize(preg.ANC_times.size(), 0);
+	//preg.prophactive.resize(preg.ANC_times.size(), 0);
 
 	preg.ru = 1.00 / 107.867;
 	preg.rd = 1.00 / 5.00;
@@ -177,7 +202,7 @@ void simulation::run_pregnancy(pregnancy& run_preg) {
 	one to look the impact of the intervention in a women with gravidity x,
 	one to generate immunity for a woman with gravidity x+1 who hasn't received IPTp before
 	*/
-	if ((!run_preg.intervene_imm) & (run_preg.strategy != 0)) {
+	if ((!run_preg.intervene_imm) && (run_preg.strategy != 0)&& !(HB_model) ){
 		pregnancy intervene_preg = run_preg;
 		intervene_preg.run_to_delivery();
 		// store the pregnancy with the intervention
@@ -194,6 +219,7 @@ void simulation::run_pregnancy(pregnancy& run_preg) {
 		run_preg.run_to_delivery();
 		store_output(run_preg);
 		if (summary)store_summary(run_preg);
+		if (HB_model)store_hb_summary(run_preg);
 	}
 	return;
 }
@@ -240,7 +266,7 @@ void simulation::getfirststate(void) {
 
 void simulation::store_output(pregnancy& store_preg) {
 	for (int i = 0; i <par_down.size(); i++) {
-		if ((store_preg.parity >= par_down[i]) & (store_preg.parity <= par_up[i])) {
+		if ((store_preg.parity >= par_down[i]) && (store_preg.parity <= par_up[i])) {
 			num_simulated[i]++;
 			for (int k = 0; k < store_preg.weekinf.size(); k++) {
 				week_prof[i][k] += store_preg.weekinf[k];
@@ -252,7 +278,7 @@ void simulation::store_output(pregnancy& store_preg) {
 }
 void simulation::store_summary(pregnancy& store_preg) {
 	for (int i = 0; i < par_down.size(); i++) {
-		if ((store_preg.parity >= par_down[i]) & (store_preg.parity <= par_up[i])) {
+		if ((store_preg.parity >= par_down[i]) && (store_preg.parity <= par_up[i])) {
 			prop_peri[i] += store_preg.ever_peri;
 			prop_plac[i] += store_preg.ever_plac;
 			plac_dur[i] += store_preg.timeinfected;
@@ -260,6 +286,23 @@ void simulation::store_summary(pregnancy& store_preg) {
 			prop_fail_proph[i] += store_preg.proph_fail;
 			tot_fail_proph[i] += store_preg.proph_fail_tot;
 			if (preg.strategy == 0) LBW_risk[i]+=1-exp(-store_preg.timechron* store_preg.rate);
+		}
+	}
+	return;
+}
+
+
+
+void simulation::store_hb_summary(pregnancy& store_preg) {
+	for (int i = 0; i < par_down.size(); i++) {
+		if ((store_preg.parity >= par_down[i]) && (store_preg.parity <= par_up[i])) {
+			if(!summary)prop_peri[i] += store_preg.ever_peri;
+			HB_diff[i] += store_preg.HB_diff;
+			HB_diff_iptp[i] += store_preg.HB_diff_iptp;
+			anaemia_moderate[i] += store_preg.anaemia_moderate;
+			anaemia_moderate_iptp[i] += store_preg.anaemia_moderate_iptp;
+			anaemia_severe[i] += store_preg.anaemia_severe;
+			anaemia_severe_iptp[i] += store_preg.anaemia_severe_iptp;
 		}
 	}
 	return;
@@ -279,6 +322,17 @@ void simulation::write_summary(void) {
 	return;
 }
 
+void simulation::write_hb_summary(void) {
+	hb_summary << "Grav_cat\tprop_peri\tHB_diff\tmoderate_anaemia\tsevere_anaemia\tHB_diff_iptp\tmoderate_anaemia_iptp\tsevere_anaemia_iptp\n";
+	for (int j = 0; j < par_down.size(); j++) {
+		if (par_down[j] == 0 && par_up[j] == 200) hb_summary << "All\t";
+		else if (par_up[j] == 200) hb_summary << as_string(par_down[j]) + "_max\t";
+		else hb_summary << as_string(par_down[j]) + "_" + as_string(par_up[j]) + "\t";
+		hb_summary << prop_peri[j] / num_simulated[j] << "\t" << HB_diff[j] / num_simulated[j] << "\t" << anaemia_moderate[j] / num_simulated[j] << "\t" << anaemia_severe[j] / num_simulated[j] << "\t" << HB_diff_iptp[j] / num_simulated[j] << "\t" << anaemia_moderate_iptp[j] / num_simulated[j] << "\t" << anaemia_severe_iptp[j] / num_simulated[j]<<"\n";
+	}
+	hb_summary.close();
+	return;
+}
 
 
 void simulation::write(void) {

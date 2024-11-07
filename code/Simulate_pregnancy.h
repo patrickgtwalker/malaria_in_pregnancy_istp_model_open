@@ -84,16 +84,19 @@ struct pregnancy {
 // HB parameters ////
 	double HB_sigma;
 	double iptp_hb_eff;
-	vector<vector<double>> HB_uninf_grav;
-	vector<vector<double>> HB_inf_preg;
+	vector<double> HB_uninf_grav;
+	vector<double> HB_inf_preg;
 
 ///HB counters
-	vector<double> HB_diff;
-	vector<double> HB_diff_iptp;
-	vector<double> anaemia_moderate;
-	vector<double> anaemia_severe;
-	vector<double> anaemia_moderate_iptp;
-	vector<double> anaemia_severe_iptp;
+	double HB_eval_time;
+	double moderate_threshold;
+	double severe_threshold;
+	double HB_diff;
+	double HB_diff_iptp;
+	double anaemia_moderate;
+	double anaemia_severe;
+	double anaemia_moderate_iptp;
+	double anaemia_severe_iptp;
 	
 ///// NATURAL PROGRESSION FUNCTIONS  /////
 void generateperiinfs(void);
@@ -130,6 +133,7 @@ int first_tri_rdt;
 int first_tri_visit;
 double first_tri_visit_time;
 
+
 double npreg_rdt_sens;
 int perfect_test;
 double perfect_sens;
@@ -143,7 +147,7 @@ double ISTshape;
 void check_any_ANC(bool& first_tri_past, vector<bool>& past_ANC);
 void any_first_trimester(bool &past);
 void IPTISTupdate(int ANC,vector<bool> & past);
-void HB_calc(int ANC, vector<bool>& past);
+void HB_calc(bool &past);
 double primi_sens;
 double rdt_preg_offset;
 double rdt_preg_shape;
