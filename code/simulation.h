@@ -31,6 +31,12 @@ struct simulation{
 	vector<double> HB_diff_iptp;
 	vector<double> anaemia_moderate_iptp;
 	vector<double> anaemia_severe_iptp;
+
+	double primi_prev_anc1 = 0;
+	vector<vector<double>> previous_inf_dist;
+	vector<vector<double>> previous_inf_dist_inf;
+
+
 	ofstream file_inf_history;
 	ofstream file_summary;
 	ofstream hb_summary;
@@ -39,15 +45,19 @@ struct simulation{
 	void setup_summary(void);
 	void setup_timeline(void);
 	void setup_hb_summary(void);
+	void setup_inf_history(void);
 	void ANC_setup(void);
 	
 	void life_time(void);
 	void run_pregnancy(pregnancy& run_preg);
 	void getfirststate(void);
+	
 	void store_hb_summary(pregnancy& store_preg);
+	void store_hist_inf_dist(pregnancy& store_preg);
 	void store_output(pregnancy& store_preg);
 	void store_summary(pregnancy& store_preg);
 	void write(void);
 	void write_summary(void);
 	void write_hb_summary(void);
+	void write_inf_history(void);
 };

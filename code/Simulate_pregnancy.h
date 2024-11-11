@@ -22,6 +22,7 @@ struct pregnancy {
 	///-----------------PREG-SPECIFIC IMMUNITY PARAMETERS-----------------------////
 	int histplac;
 	int histinf;
+	
 	double inflag;
 	double prog1;
 	double prog2;
@@ -97,6 +98,11 @@ struct pregnancy {
 	double anaemia_severe;
 	double anaemia_moderate_iptp;
 	double anaemia_severe_iptp;
+
+	// for inf_history
+	double inf_hist_eval_time;
+	int hist_inf_beg;
+	bool inf_anc1;
 	
 ///// NATURAL PROGRESSION FUNCTIONS  /////
 void generateperiinfs(void);
@@ -148,6 +154,8 @@ void check_any_ANC(bool& first_tri_past, vector<bool>& past_ANC);
 void any_first_trimester(bool &past);
 void IPTISTupdate(int ANC,vector<bool> & past);
 void HB_calc(bool &past);
+void inf_hist_calc(bool& past);
+
 double primi_sens;
 double rdt_preg_offset;
 double rdt_preg_shape;

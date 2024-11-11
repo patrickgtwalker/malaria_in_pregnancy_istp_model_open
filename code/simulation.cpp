@@ -14,6 +14,7 @@ void simulation::run_simulation(void) {
 	write();
 	if (summary)write_summary();
 	if (HB_model)write_hb_summary();
+	if (inf_history)write_inf_history();
 	return;
 }
 
@@ -33,6 +34,48 @@ void simulation::setup_hb_summary(void) {
 	anaemia_severe_iptp.resize(par_down.size(), 0);
 	HB_diff_iptp.resize(par_down.size(), 0);
 }
+
+void simulation::store_hist_inf_dist(pregnancy& store_preg) {
+	for (int i = 0; i < par_down.size(); i++) {
+		if ((store_preg.parity >= par_down[i]) & (store_preg.parity <= par_up[i])) {
+			if (previous_inf_dist[i].size() <= store_preg.hist_inf_beg) {
+				previous_inf_dist[i].push_back(1.00);
+			}
+			else {
+				previous_inf_dist[i][store_preg.hist_inf_beg]++;
+			}
+			if (store_preg.inf_anc1) {
+				if (previous_inf_dist_inf[i].size() <= store_preg.hist_inf_beg) {
+					previous_inf_dist_inf[i].push_back(1.00);
+				}
+				else {
+					previous_inf_dist_inf[i][store_preg.hist_inf_beg]++;
+				}
+			}
+		}
+	}
+	if (store_preg.parity == 0 & store_preg.inf_anc1) primi_prev_anc1++;
+	return;
+}
+
+
+void simulation::setup_inf_history(void) {
+	primi_prev_anc1 = 0;
+	previous_inf_dist.resize(par_down.size(), vector<double>(20, 0));
+	previous_inf_dist_inf.resize(par_down.size(), vector<double>(20, 0));
+	file_inf_history << "EIR\tprimi_ANC_prev";
+	for (int i = 0; i < par_down.size(); i++) {
+		for (int j = 0; j < previous_inf_dist_inf[i].size(); j++) {
+			file_inf_history << "\tprev_inf_dist_inf_cat_" + as_string(i) + "_n_" + as_string(j);
+		}
+		for (int j = 0; j < previous_inf_dist[i].size(); j++) {
+			file_inf_history << "\tprev_inf_dist_cat_" + as_string(i) + "_n_" + as_string(j);
+		}
+	}
+	file_inf_history << "\n";
+	return;
+}
+
 void simulation::setup_summary(void) {
 	prop_peri.resize(par_down.size(),0);
 	prop_plac.resize(par_down.size(), 0);
@@ -45,6 +88,21 @@ void simulation::setup_summary(void) {
 	return;
 }
 
+void simulation::write_inf_history(void) {
+	file_inf_history << gen_parms.EIR << "\t" << primi_prev_anc1 / num_simulated[0];
+	for (int i = 0; i < par_down.size(); i++) {
+		for (int j = 0; j < previous_inf_dist_inf[i].size(); j++) {
+			file_inf_history << "\t" << previous_inf_dist_inf[i][j] / num_simulated[i];
+		}
+		for (int j = 0; j < previous_inf_dist[i].size(); j++) {
+			file_inf_history << "\t" << previous_inf_dist[i][j] / num_simulated[i];
+		}
+	}
+	file_inf_history << "\n";
+	file_inf_history.flush();
+	//file_inf_history.close();
+	return;
+}
 
 
 void simulation::ANC_setup(void) {
@@ -218,6 +276,7 @@ void simulation::run_pregnancy(pregnancy& run_preg) {
 		// no need to run two pregnancies 
 		run_preg.run_to_delivery();
 		store_output(run_preg);
+		if (inf_history)store_hist_inf_dist(run_preg);
 		if (summary)store_summary(run_preg);
 		if (HB_model)store_hb_summary(run_preg);
 	}

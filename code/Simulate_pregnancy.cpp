@@ -71,8 +71,10 @@ void pregnancy::generateperiinfs(void){
 ANY ANC-BASED INTERVENTION */
 void pregnancy::run_to_delivery(void) {
 	//set ANC counters to zero
+	bool inf_hist_eval_past = false;
 	bool hb_eval_past = false;
 	bool first_tri_past = false;
+	hist_inf_beg = histinf;
 	vector<bool> past_ANC(ANC_times.size() , false);
 	if (start_peri_inftimes_B.size() == 0)gest_time = gestation_duration + 1.0; //PREGNANCY NOT EXPOSED 
 	else {
@@ -92,11 +94,15 @@ void pregnancy::run_to_delivery(void) {
 		end_peri_time_K.erase(end_peri_time_K.begin());
 		// find next event (either peripheral infection clears or placenta is exposed)
 		gest_time = min(pcr_clear_time, plac_exposure_times_P[0]);
+		
+		if (inf_history_model == 1) {
+			inf_hist_calc(inf_hist_eval_past); 
+		}
 		///// CHECK IF WE'VE ACTUALLY PASSED ANY ANC DATES AND IF SO WHETHER WE PROVIDED PROPHYLAXIS
 		
 		if (HB_model == 1) {
-			cout << "here" << "\n";
 			HB_calc(hb_eval_past);
+
 		}
 		else {
 			check_any_ANC(first_tri_past, past_ANC);
@@ -168,6 +174,9 @@ void pregnancy::run_to_delivery(void) {
 			/// FIND OUT WHETHER NEXT EVENT IS PERIPHERAL OF PLACENTAL
 			gest_time = ((nextplactime > gest_time && nextplactime < next_peri_time) ? nextplactime : next_peri_time);
 			///// CHECK IF WE'VE ACTUALLY PASSED ANY ANC DATES AND IF SO WHETHER WE PROVIDED PROPHYLAXIS
+			if (inf_history_model == 1) {
+				inf_hist_calc(inf_hist_eval_past);
+			}
 			if (HB_model == 1) {
 				HB_calc(hb_eval_past);
 			}
@@ -298,11 +307,11 @@ return;
 ////////////////////////////////////////////////////////// FUNCTIONS FOR ANC INTERVENTIONS //////////////////////
 /// FUNCTION TO SEE IF TESTING AND/OR TREATMENT IN FIRST TRIMESTER 
 void  pregnancy::any_first_trimester(bool &past) {
-	if ((!past)&((first_tri_rdt > 0) & (gest_time>first_tri_visit_time)& (first_tri_visit_time >0))) {
+	if ((!past)&&((first_tri_rdt > 0) && (gest_time>first_tri_visit_time) && (first_tri_visit_time >0))) {
 		past = true;
-		bool current_inf = (start_pcr_time< first_tri_visit_time) & (pcr_clear_time> first_tri_visit_time);
+		bool current_inf = (start_pcr_time< first_tri_visit_time) && (pcr_clear_time> first_tri_visit_time);
 		double first_tri_sens = first_tri_rdt == 1 ? npreg_rdt_sens : perfect_sens;
-		if (current_inf&(runif() < first_tri_sens)) {
+		if (current_inf&&(runif() < first_tri_sens)) {
 			if(ISTeff>runif())drugclearance(first_tri_visit_time, getend_weibull(first_tri_visit_time, ISTscale, ISTshape));
 		}
 	}
@@ -322,13 +331,23 @@ void pregnancy::HB_calc(bool &past) {
 			anaemia_moderate_iptp = normalCDF((HB_uninf - moderate_threshold) / HB_sigma) - normalCDF((HB_mean_inf_iptp - moderate_threshold) / HB_sigma);
 			anaemia_severe_iptp = normalCDF((HB_uninf - severe_threshold) / HB_sigma) - normalCDF((HB_mean_inf_iptp - severe_threshold) / HB_sigma);
 		}
+		past = true;
 	}
 	return;
 }
+
+
+void pregnancy::inf_hist_calc(bool& past) {
+	if ((!past) && (gest_time > inf_hist_eval_time)) {
+		if ((totalpara > 0)||((start_pcr_time < inf_hist_eval_time) && (pcr_clear_time > inf_hist_eval_time))) inf_anc1 = true;
+		past = true;
+	}
+		return;
+}
 /// FUNCTION TO IMPLEMENT INTERVENTION IN ANC VISITS FROM SECOND TRIMESTER ONWARDS
 void pregnancy::IPTISTupdate(int ANC,vector<bool>& past) {
-	if ((!past[ANC]) & (gest_time > ANC_times[ANC])) {
-		if ((strategy == 0) & (ANC == 1) & ((totalpara > 0) | ((start_pcr_time < ANC_times[ANC]) & (pcr_clear_time > ANC_times[ANC])))) clear_fail = 1;
+	if ((!past[ANC]) && (gest_time > ANC_times[ANC])) {
+		if ((strategy == 0) && (ANC == 1) && ((totalpara > 0) || ((start_pcr_time < ANC_times[ANC]) && (pcr_clear_time > ANC_times[ANC])))) clear_fail = 1;
 		if (strategy == 1) {
 			// IPTp using "IPT_drug"
 			if (IPTeff > runif()) {
@@ -339,11 +358,11 @@ void pregnancy::IPTISTupdate(int ANC,vector<bool>& past) {
 		}
 		else if (strategy > 1) {
 			// INVOLVES AN RDT GET SENSITIVITY
-			bool current_infection = ((totalpara > 0 )| ((start_pcr_time< ANC_times[ANC]) & (pcr_clear_time>ANC_times[ANC])));
+			bool current_infection = ((totalpara > 0 )|| ((start_pcr_time< ANC_times[ANC]) && (pcr_clear_time>ANC_times[ANC])));
 			double current_sensitivity = perfect_test ? perfect_sens : (ANC != 0 ? (prev_inf ? late_sensitivity_prev_inf[parity] : late_sensitivity[parity]) : sensitivity[histinf]);
 			if (strategy == 2) {
 				// ISTP - ONLY TREAT POSITIVE WITH "IST_DRUG"
-				if (current_infection & (runif() < current_sensitivity)) {
+				if (current_infection && (runif() < current_sensitivity)) {
 					//DETECTED
 					if (ISTeff > runif()) {
 						//SUCCESSFULLY TREATED
@@ -355,7 +374,7 @@ void pregnancy::IPTISTupdate(int ANC,vector<bool>& past) {
 			}
 			else if (strategy > 2) {
 				// HYBRID - STRATEGY 3 IS TEST IN FIRST VISIT IN 2ND TRIMESTER, 4 IS TESTS IN ALL VISITS, ALL WOMEN RECEIVE AT LEAST IPT_DRUG
-				if (current_infection & (ANC == 0 || strategy == 4) & (runif() < current_sensitivity)) {
+				if (current_infection && (ANC == 0 || strategy == 4) && (runif() < current_sensitivity)) {
 					//DETECTED
 					if (ISTeff > runif()) {
 						//SUCCESSFULLY TREATED
@@ -457,5 +476,7 @@ void pregnancy::clearall(void){
 	prev_inf=0;
 	fill(weekinf.begin(),weekinf.end(),0);
 	fill(weekperiinf.begin(),weekperiinf.end(),0);
+	inf_anc1 = false;
+
 return;
 }
