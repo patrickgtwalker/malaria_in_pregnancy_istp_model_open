@@ -33,6 +33,7 @@ struct simulation{
 	vector<double> anaemia_severe_iptp;
 
 	double primi_prev_anc1 = 0;
+	double primi_prev_hb_eval = 0;
 	vector<vector<double>> previous_inf_dist;
 	vector<vector<double>> previous_inf_dist_inf;
 

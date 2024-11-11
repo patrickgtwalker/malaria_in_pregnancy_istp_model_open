@@ -321,6 +321,7 @@ void  pregnancy::any_first_trimester(bool &past) {
 void pregnancy::HB_calc(bool &past) {
 	if ((!past) && (gest_time > HB_eval_time)) {
 		if ((totalpara > 0) || ((start_pcr_time < HB_eval_time) && (pcr_clear_time > HB_eval_time))) {
+			inf_at_hb_eval = true;
 			HB_diff = HB_inf_preg[histinf];
 			HB_diff_iptp = HB_diff * (1 - iptp_hb_eff);
 			double HB_uninf = HB_uninf_grav[parity];
@@ -339,7 +340,9 @@ void pregnancy::HB_calc(bool &past) {
 
 void pregnancy::inf_hist_calc(bool& past) {
 	if ((!past) && (gest_time > inf_hist_eval_time)) {
-		if ((totalpara > 0)||((start_pcr_time < inf_hist_eval_time) && (pcr_clear_time > inf_hist_eval_time))) inf_anc1 = true;
+		if ((totalpara > 0) || ((start_pcr_time < inf_hist_eval_time) && (pcr_clear_time > inf_hist_eval_time))) {
+			inf_anc1 = true;
+		}
 		past = true;
 	}
 		return;
@@ -477,6 +480,7 @@ void pregnancy::clearall(void){
 	fill(weekinf.begin(),weekinf.end(),0);
 	fill(weekperiinf.begin(),weekperiinf.end(),0);
 	inf_anc1 = false;
+	inf_at_hb_eval = false;
 
 return;
 }

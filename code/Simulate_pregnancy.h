@@ -90,6 +90,7 @@ struct pregnancy {
 
 ///HB counters
 	double HB_eval_time;
+	bool inf_at_hb_eval;
 	double moderate_threshold;
 	double severe_threshold;
 	double HB_diff;
