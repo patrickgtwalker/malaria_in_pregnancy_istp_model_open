@@ -1,3 +1,6 @@
 sim_params	Sim_params.txt
 preg_params	preg_params.txt
 fertility_rates fertility_rates\Malawi_rates_rural_2012.txt
+HB_non_inf_file	HB_vectors\non_inf_HB_by_GA_grav.txt
+HB_inf_file	HB_vectors\HB_mal_diff_by_GA_inf.txt
+

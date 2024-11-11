@@ -19,10 +19,13 @@ first_tri_visit_time 70
 first_tri_rdt 1
 ANC_1 1
 ANC_2 1
-ANC_3 1
-ANC_time_1 158
-ANC_time_2 203
-ANC_time_3 254
+ANC_time_1 105
+ANC_time_2 180
+HB_eval_time 100
+moderate_threshold 9
+severe_threshold 7
+HB_sigma 1.44677528964453
+HB_iptp_eff	0.446324
 output_beg_0 0
 output_end_0 0
 output_beg_1 1
@@ -32,5 +35,6 @@ output_end_2 -1
 output_beg_3 -1
 output_end_3 -1
 summary	1
-HB_model 0
+HB_model 1
+inf_history 1
 

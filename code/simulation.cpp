@@ -154,8 +154,8 @@ void simulation::ANC_setup(void) {
 	
 	if (HB_model) {
 		preg.HB_sigma = from_map("HB_sigma", 0.1, 20);
-		preg.HB_eval_time = from_map("HB_eval_time", 85, 200);
-		int HB_eval_time_int = floor(preg.HB_eval_time - 84);
+		preg.HB_eval_time = from_map("HB_eval_time", 80, 200.999);
+		int HB_eval_time_int = floor(preg.HB_eval_time - 80);
 		preg.moderate_threshold= from_map("moderate_threshold", 4, 12);
 		preg.severe_threshold = from_map("severe_threshold", 4, 12);
 		preg.iptp_hb_eff = from_map("HB_iptp_eff", 0, 1);
