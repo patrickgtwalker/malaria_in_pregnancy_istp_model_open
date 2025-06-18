@@ -79,14 +79,15 @@ void simulation::setup_inf_history(void) {
 	primi_prev_anc1 = 0;
 	previous_inf_dist.resize(par_down.size(), vector<double>(20, 0));
 	previous_inf_dist_inf.resize(par_down.size(), vector<double>(20, 0));
-	file_inf_history << "EIR\tprimi_ANC_prev";
+	file_inf_history << "EIR\tprimi_prev";
 	for (int i = 0; i < par_down.size(); i++) {
 		for (int j = 0; j < previous_inf_dist_inf[i].size(); j++) {
-			file_inf_history << "\tprev_inf_dist_inf_cat_" + as_string(i) + "_n_" + as_string(j);
+			file_inf_history << "\tgrav_cat_" + as_string(i+1) + "_prev_infs_" + as_string(j);
 		}
-		for (int j = 0; j < previous_inf_dist[i].size(); j++) {
+		/*for (int j = 0; j < previous_inf_dist[i].size(); j++) {
 			file_inf_history << "\tprev_inf_dist_cat_" + as_string(i) + "_n_" + as_string(j);
 		}
+		*/
 	}
 	file_inf_history << "\n";
 	return;
@@ -107,12 +108,16 @@ void simulation::setup_summary(void) {
 void simulation::write_inf_history(void) {
 	file_inf_history << gen_parms.EIR << "\t" << primi_prev_anc1 / num_simulated[0];
 	for (int i = 0; i < par_down.size(); i++) {
+		double total_infected = 0;
 		for (int j = 0; j < previous_inf_dist_inf[i].size(); j++) {
-			file_inf_history << "\t" << previous_inf_dist_inf[i][j] / num_simulated[i];
+			total_infected+= previous_inf_dist_inf[i][j];
 		}
-		for (int j = 0; j < previous_inf_dist[i].size(); j++) {
+		for (int j = 0; j < previous_inf_dist_inf[i].size(); j++) {
+			file_inf_history << "\t" << previous_inf_dist_inf[i][j] / total_infected;
+		}
+		/*for (int j = 0; j < previous_inf_dist[i].size(); j++) {
 			file_inf_history << "\t" << previous_inf_dist[i][j] / num_simulated[i];
-		}
+		}*/
 	}
 	file_inf_history << "\n";
 	file_inf_history.flush();
@@ -168,6 +173,9 @@ void simulation::ANC_setup(void) {
 		preg.HB_inf_preg = HB_inf_vectors[HB_eval_time_int];
 		preg.HB_uninf_grav=HB_non_inf_vectors[HB_eval_time_int];
 
+	}
+	if (inf_history) {
+	preg.inf_hist_eval_time= from_map("inf_hist_eval_time", 0, 280);
 	}
 //	preg.pastANC.resize(preg.ANC_times.size(), 0);
 	//preg.endIPT.resize(preg.ANC_times.size(), 0);
@@ -385,12 +393,12 @@ void simulation::write_summary(void) {
 }
 
 void simulation::write_hb_summary(void) {
-	hb_summary << "EIR\tprimi_prev\tGrav_cat\tprop_peri\tHB_diff\tmoderate_anaemia\tsevere_anaemia\tHB_diff_iptp\tmoderate_anaemia_iptp\tsevere_anaemia_iptp\n"; 
+	hb_summary << "Grav_cat\tEIR\tprimi_prev\teval_time\tHB_diff\tmoderate_anaemia\tsevere_anaemia\tHB_diff_iptp\tmoderate_anaemia_iptp\tsevere_anaemia_iptp\n"; 
 		for (int j = 0; j < par_down.size(); j++) {
 		if (par_down[j] == 0 && par_up[j] == 200) hb_summary << "All\t";
 		else if (par_up[j] == 200) hb_summary << as_string(par_down[j]) + "_max\t";
 		else hb_summary << as_string(par_down[j]) + "_" + as_string(par_up[j]) + "\t";
-		hb_summary << gen_parms.EIR << "\t" << primi_prev_hb_eval / num_simulated[0] <<"\t"<< prop_peri[j] / num_simulated[j] << "\t" << HB_diff[j] / num_simulated[j] << "\t" << anaemia_moderate[j] / num_simulated[j] << "\t" << anaemia_severe[j] / num_simulated[j] << "\t" << HB_diff_iptp[j] / num_simulated[j] << "\t" << anaemia_moderate_iptp[j] / num_simulated[j] << "\t" << anaemia_severe_iptp[j] / num_simulated[j]<<"\n";
+		hb_summary << gen_parms.EIR << "\t" << primi_prev_hb_eval / num_simulated[0] << "\t" <<preg.HB_eval_time<< "\t" << HB_diff[j] / num_simulated[j] << "\t" << anaemia_moderate[j] / num_simulated[j] << "\t" << anaemia_severe[j] / num_simulated[j] << "\t" << HB_diff_iptp[j] / num_simulated[j] << "\t" << anaemia_moderate_iptp[j] / num_simulated[j] << "\t" << anaemia_severe_iptp[j] / num_simulated[j]<<"\n";
 	}
 	hb_summary.close();
 	return;

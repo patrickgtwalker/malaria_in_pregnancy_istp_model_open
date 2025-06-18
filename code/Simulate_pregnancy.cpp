@@ -104,7 +104,8 @@ void pregnancy::run_to_delivery(void) {
 			HB_calc(hb_eval_past);
 
 		}
-		else {
+
+		if(!HB_model&&!inf_history_model){
 			check_any_ANC(first_tri_past, past_ANC);
 		}
 		
@@ -180,7 +181,7 @@ void pregnancy::run_to_delivery(void) {
 			if (HB_model == 1) {
 				HB_calc(hb_eval_past);
 			}
-			else {
+			if (!HB_model && !inf_history_model) {
 				check_any_ANC(first_tri_past, past_ANC);
 			}
 		}
