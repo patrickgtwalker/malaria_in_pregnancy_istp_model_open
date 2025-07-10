@@ -1,6 +1,6 @@
 # Model Instructions
 
-This file summarizes the key steps for compiling and running the malaria in pregnancy model. It replaces the previous binary document `Instructions.docx`.
+This file summarizes the key steps for compiling and running the malaria in pregnancy model. For further detail on parameters and advanced usage see `Instructions.docx`.
 
 ## Compiling the executable
 1. Open Microsoft Visual Studio (the Community Edition works).
